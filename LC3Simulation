@@ -1,0 +1,121 @@
+module Full_Adder (input A, input B, input Cin, output sum, output Cout);
+	assign sum = A^B^Cin;
+	assign Cout = (A&B) | (B&Cin) | (A&Cin);
+endmodule
+
+
+module Sixteenbitadder (input[15:0] A, input [15:0] B, input Cin, output [15:0] Sum, output Cout);
+	wire [16:0] intermediate;
+	assign intermediate[0] = Cin;
+	genvar i;
+	generate
+		for(i=0; i<16; i=i+1) begin : FullAdders
+			Full_Adder instances (A[i], B[i], intermediate[i], Sum[i], intermediate[i+1]);
+		end
+	endgenerate
+	assign Cout = intermediate[16];
+endmodule
+
+module ALU (input [1:0] control, input [15:0] A, input [15:0] B, output [15:0] out);
+	wire [15:0] insertA, insertB;
+	assign insertB = ~({16{control[1]}} | {16{control[0]}}) & B;
+	always @(*) begin
+		case (control)
+			1: insertA = A & B;
+			2: insertA = ~A;
+			default: insertA = A;
+		endcase
+	end
+	Sixteenbitadder Adder (insertA, insertB, 0, out, 0);
+endmodule
+
+module registerfile (input [15:0] new, input DR[2:0], input LDREG,
+input [2:0] SR2, input [2:0] SR1, output [15:0] SR2OUT, output [15:0] SR1OUT); 
+	reg [15:0] RegisterTable [7:0];
+	assign SR2OUT = RegisterTable[SR2];
+	assign SR1OUT = RegisterTable[SR1];
+	always @(*) begin
+		if(LD.REG) begin
+			RegisterTable[DR] <= new;
+		end
+		else
+			RegisterTable <= RegisterTable;
+	end
+endmodule
+
+
+
+module LC3Simulation(    );
+	wire [15:0] mainBus, SR2OUT, SR1OUT, SR2MUXOUTPUT, 
+	ALURESULT,ADDR1MUXRESULT, ADDR2MUXRESULT, MARMUXADDERRESULT,
+	PCMUXRESULT, MARMUXRESULT, PCPLUSONE;
+	wire GateALU, GateMARMUX, GatePC, GateMDR, ADDR1MUX, MARMUX,
+	LDIR, Negative, Zero, Positive; 
+	reg [15:0] PC, MAR, MDR,IR;
+	wire [2:0] DR, SR2, SR1, LDREG;
+	reg[2:0] CC;
+	wire [1:0] ALUK, ADDR2MUX, PCMUX;
+	
+	
+	registerfile REGFILE ( .new(mainBus), .DR(DR), .LDREG(LDREG),
+	.SR2(SR2), .SR1(SR1), .SR2OUT(SR2OUT), .SR1OUT(SR1OUT));
+	
+	
+	assign SR2MUXOUTPUT = (IR[5]) ? {11{IR[4]}} , IR[4:0]} : SR2OUT;
+	
+	
+	ALU  regularALU (.control(ALUK), .A(SR1OUT) , .B(SR2MUXOUTPUT) , .out(ALURESULT));
+	
+	
+	always @(*) begin
+		case (ADDR2MUX)
+			0: ADDR2MUXRESULT = 16'b0;
+			1: ADDR2MUXRESULT = {{10{IR[5]}},IR[5:0]};
+			2: ADDR2MUXRESULT = {{7{IR[8]}},IR[8:0]};
+			3: ADDR2MUXRESULT = {{5{IR[10]}},IR[10:0]};
+		endcase
+		
+		case(PCMUX)
+			0:PCMUXRESULT = PCPLUSONE;
+			1:PCMUXRESULT = MARMUXADDERRESULT;
+			default: PCMUXRESULT = mainBus
+		endcase
+	end
+	
+	assign ADDR1MUXRESULT = (ADDR1MUX) ? SR1OUTRESULT : PC;
+	
+	Sixteenbitadder MARMUXADDER (ADDR1MUX, ADDR2MUX, 0, MARMUXADDERRESULT, 0);
+	
+	Sixteenbitadder MARMUXADDER (PC, 16'b0, 1, PCPLUSONE, 0);
+
+	assign MARMUXRESULT = (MARMUX) ? {{8{1'b0}},IR[7:0]} : MARMUXADDERRESULT;
+	
+	always @(*) begin
+		if(LDIR)
+			IR<=mainBus;
+		else
+			IR<=IR;
+	end
+	
+	assign Negative = mainBus[15];
+	assign Zero = ~(|mainBus);
+	assign Positive = ~(Negative | Zero);
+	
+	always @(*) begin
+		if(LDIR) begin
+			CC[2]<=Negative;
+			CC[1]<=Zero;
+			CC[0]<=Positive;
+		end
+		else
+			CC<=CC;
+	end
+	
+	
+	
+	
+	
+	
+	
+	
+endmodule
