@@ -1,4 +1,5 @@
 
+
 module Full_Adder (input A, input B, input Cin, output sum, output Cout);
 	assign sum = A^B^Cin;
 	assign Cout = (A&B) | (B&Cin) | (A&Cin);
@@ -73,10 +74,6 @@ module memory (input [15:0] Addr, input [15:0] dataIn, input RW, input MIOEN, ou
 endmodule
     
 
-
-
-endmodule
-
 module LC3Simulation(    );
 	wire [15:0] mainBus, SR2OUT, SR1OUT, SR2MUXOUTPUT, 
 	ALURESULT, ADDR1MUXRESULT, ADDR2MUXRESULT, MARMUXADDERRESULT,
@@ -87,13 +84,13 @@ module LC3Simulation(    );
 	wire [2:0] DR, SR2, SR1, LDREG;
 	reg[2:0] CC;
 	wire [1:0] ALUK, ADDR2MUX, PCMUX, DRMUX, SR1MUX;
-	
+	reg [5:0] state;
 	
 	registerfile REGFILE ( .new(mainBus), .DR(DR), .LDREG(LDREG),
 	.SR2(SR2), .SR1(SR1), .SR2OUT(SR2OUT), .SR1OUT(SR1OUT));
 	
 	
-	assign SR2MUXOUTPUT = (IR[5]) ? {11{IR[4]}} , IR[4:0]} : SR2OUT;
+	assign SR2MUXOUTPUT = (IR[5]) ? {{11{IR[4]}} , IR[4:0]} : SR2OUT;
 	
 	
 	ALU  regularALU (.control(ALUK), .A(SR1OUT) , .B(SR2MUXOUTPUT) , .out(ALURESULT));
@@ -127,10 +124,34 @@ module LC3Simulation(    );
 		case(PCMUX)
 			0:PCMUXRESULT = PCPLUSONE;
 			1:PCMUXRESULT = MARMUXADDERRESULT;
-			default: PCMUXRESULT = mainBus
+			default: PCMUXRESULT = mainBus;
 		endcase
 	end
-	
+	assign GateMARMUX = ~state[5] & ~state[4] & state[1];
+	assign LDBEN = state==0;
+	assign LDPC = ~state[5] & state[4] & (state==2 | state==6 | state==5 | state==4 | state==14);
+	assign LDIR = state[5] & state[1] & state[0];
+	assign PCMUX[1] = ~(state== 18 || state == 30);
+	assign PCMUX[0] = state==30;
+	assign GatePC = ~state[5] & ~state[0] & ((~(state[4] ^ state[3]) & state[2] & ~state[1]) | state[4:1] == 9);
+	assign LDCC = ~state[5] & (state[4:0] == 1 || state[4:0] == 5 || state[4:0] == 9 || state[4:0] ==14 || state[27]);
+	assign GateALU = ~state[5] & ~state[4] & state[0] & ~state[1] & ~(state[2] & state[3]);
+	assign GateMDR = (~state[5] & state[4] & state[3] & state[1] & (state[0] | state[2])) | (state[5] & state[1]);
+	assign RW = state[4:0] == 5'b10000;
+	assign LDMAR = ~state[5] & ((~state[4] & ~state[3] & state[1] &~state[0]) | (~state[4] & state[3] & state[1] & state[0] & state[0]) | (state[4] & ~state[2] & state[1] & ~state[0]));
+	assign MIOEN = ~state[1] & ((~state[5] & state[4] & state[3]) | (~state[5] & state[4] & ~state[2] & ~state[0]) | (state[5] & ~state[4] & ~state[3] & ~state[2] & state[0]));
+	assign MARMUX = state[4] | ~state[3] | ~state[2] | ~state[1] | ~state[0];
+	assign LDMAR = (~state[5] & state[4] & state[3] & ~state[1]) | state[4:0]==23 | state==33;
+	assign ALUK[0] = state[2];
+	assign ALUK[1] = state[4] | state[3];
+	assign SR1MUX[0] = ~(state==23);
+	assign SR1MUX[1] = 1'b0;
+	assign LDREG = ~state[5] & ((~state[4] & ~state[3] & state[2] & ~state[1]) | (~state[4] & ~state[2] & ~state[1] & state[0]) | (state[4:0] == 14 | state[4:0] ==27 | state[4:0] ==28));
+	assign DRMUX = ~(state[4] ^ state[3]) & state[2] & ~state[1] & ~state[0];
+	assign ADDR1MUX = state[2] & ((~state[1] & ~state[0]) | (~state[4] & ~state[3]));
+	assign ADDR2MUX[0] = (state[0] & ~state[1]) | (state[2] & ~state[3] & ~state[4]);
+	assign ADDR2MUX[1] = ~state[2] | (~state[1] & state[0]) | (state[3] & state[1]) | (state[4] & state[1]);
+
 	assign ADDR1MUXRESULT = (ADDR1MUX) ? SR1OUTRESULT : PC;
 	
 	Sixteenbitadder MARMUXADDER (ADDR1MUX, ADDR2MUX, 0, MARMUXADDERRESULT, 0);
@@ -189,4 +210,7 @@ module LC3Simulation(    );
 
 	
 endmodule
+
+
+
 
