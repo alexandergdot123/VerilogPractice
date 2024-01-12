@@ -19,37 +19,31 @@ module Sixteenbitadder (input[15:0] A, input [15:0] B, input Cin, output [15:0] 
 endmodule
 
 module ALU (input [1:0] control, input [15:0] A, input [15:0] B, output [15:0] out);
-	wire [15:0] insertA, insertB;
+	wire [15:0] insertA;
+	wire [15:0] insertB;
 	assign insertB = ~({16{control[1]}} | {16{control[0]}}) & B;
-	always @(*) begin
-		case (control)
-			1: insertA = A & B;
-			2: insertA = ~A;
-			default: insertA = A;
-		endcase
-	end
+	assign insertA = (control[0]) ? A&B : A ^ {16{control[1]}};
 	Sixteenbitadder Adder (insertA, insertB, 0, out, 0);
 endmodule
 
-module registerfile (input clk, input [15:0] new, input DR[2:0], input LDREG,
-input [2:0] SR2, input [2:0] SR1, output [15:0] SR2OUT, output [15:0] SR1OUT); 
+module registerfile (input clk, input [15:0] newb, input [2:0] DR, input LDREG, input [2:0] SR2, input [2:0] SR1, output [15:0] SR2OUT, output [15:0] SR1OUT); 
 	reg [15:0] RegisterTable [7:0];
 	assign SR2OUT = RegisterTable[SR2];
 	assign SR1OUT = RegisterTable[SR1];
 	always @(posedge clk) begin
-		if(LD.REG) begin
-			RegisterTable[DR] <= new;
+		if(LDREG) begin
+			RegisterTable[DR] <= newb;
 		end
 		else
-			RegisterTable <= RegisterTable;
+			RegisterTable[DR] <= RegisterTable[DR];
 	end
 endmodule
 
-module memory (input clk, input [15:0] Addr, input [15:0] dataIn, input RW, input MIOEN, output Ready, output [15:0] memoryOutput, input load, input [10048535:0] contents);
-    reg [15:0] mem [65535:0];
+module memory (input clk, input [15:0] Addr, input [15:0] dataIn, input RW, input MIOEN, output Ready, output [15:0] memoryOutput, input load, input [1048575:0] contents);
+	reg [15:0] mem [65535:0];
 	always @(posedge clk) begin
 		if (load) begin
-			for(int i = 0; i<65536; i=i+1) begin
+			for(integer i = 0; i<65536; i=i+1) begin
 				mem[i]<=contents[(i*16) + 15 : i*16];
 			end
 			Ready <= 1;
@@ -74,7 +68,7 @@ module memory (input clk, input [15:0] Addr, input [15:0] dataIn, input RW, inpu
 endmodule
     
 
-module LC3Simulation(input clk, input reset);
+module LC3Simulation(input clk, input reset, input [15:0] PEECEE, input LOADPC, input memload, input [1048575:0] contents);
 	wire [15:0] mainBus, SR2OUT, SR1OUT, SR2MUXOUTPUT, 
 	ALURESULT, ADDR1MUXRESULT, ADDR2MUXRESULT, MARMUXADDERRESULT,
 	PCMUXRESULT, MARMUXRESULT, PCPLUSONE, memoryOutput;
@@ -86,9 +80,10 @@ module LC3Simulation(input clk, input reset);
 	wire [1:0] ALUK, ADDR2MUX, PCMUX, DRMUX, SR1MUX;
 	reg [5:0] state = 6'b010010;
 	
-	registerfile REGFILE (.clk(clk), .new(mainBus), .DR(DR), .LDREG(LDREG),
+	registerfile REGFILE (.clk(clk), .newb(mainBus), .DR(DR), .LDREG(LDREG),
 	.SR2(SR2), .SR1(SR1), .SR2OUT(SR2OUT), .SR1OUT(SR1OUT));
 	
+	memory memoryAttachment ( clk, MAR, MDR, RW, MIOEN, memReady, memoryOutput, memload, contents);
 	
 	assign SR2MUXOUTPUT = (IR[5]) ? {{11{IR[4]}} , IR[4:0]} : SR2OUT;
 	
@@ -151,7 +146,7 @@ module LC3Simulation(input clk, input reset);
 	always @(posedge clk) begin
 		if(reset) begin
 			state <= 18;
-			PC <=0;
+			PC <= (LOADPC) ? PEECEE : 16'b0000000000000000;
 			MDR <= 0;
 			MAR <= 0;
 			IR <=0;
@@ -188,7 +183,7 @@ module LC3Simulation(input clk, input reset);
 				PC <= PC;
 
 			case (state)
-				0: {1'b0,BEN,1'b0, BEN, BEN,1'b0};
+				0: state <= {1'b0,BEN,1'b0, BEN, BEN,1'b0};
 				1: state <= 18;
 				2: state <= 25;
 				3: state<= 23;
@@ -228,7 +223,7 @@ module LC3Simulation(input clk, input reset);
 	
 	Sixteenbitadder MARMUXADDER (ADDR1MUX, ADDR2MUX, 0, MARMUXADDERRESULT, 0);
 	
-	Sixteenbitadder MARMUXADDER (PC, 16'b0, 1, PCPLUSONE, 0);
+	Sixteenbitadder PCPLUSONEADDER (PC, 16'b0, 1, PCPLUSONE, 0);
 
 	assign MARMUXRESULT = (MARMUX) ? {{8{1'b0}},IR[7:0]} : MARMUXADDERRESULT;
 
@@ -247,7 +242,7 @@ module LC3Simulation(input clk, input reset);
 		else if (GateMDR)
 			mainBus = MDR;
 		else
-			mainBus = 16'bZ;
+			mainBus = 16'bZZZZZZZZZZZZZZZZ;
 
 		if(LD.BEN)
 			BEN = (Negative & IR[11])|(Zero & IR[10])|(Positive & IR[9]);
@@ -255,7 +250,4 @@ module LC3Simulation(input clk, input reset);
 			BEN =0;
 	end
 endmodule
-
-
-
 
