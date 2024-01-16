@@ -118,15 +118,20 @@ module memory (input clk, input [15:0] Addr, input [15:0] dataIn, input RW, inpu
 	end
 endmodule
     */
-module memory (input clk, input [15:0] Addr, input [15:0] dataIn, input RW, input MIOEN, output Ready, output [15:0] memoryOutput);
-	reg [15:0] mem [65535:0];	
+module memory (input clk, input [15:0] Addr, input [15:0] dataIn, input RW, input MIOEN, output Ready, output [15:0] memoryOutput,
+input memLoad, input [15:0] memLoadAddress, input [15:0] memLoadBits);
+	reg [15:0] mem [65535];	
 	
+	always @(posedge clk) begin
+		if(memLoad)
+			mem[memLoadAddress] <= memLoadBits;
+	end
 	always @(posedge clk) begin
 		/*if (load) begin
 			mem<=contents;
 			//Ready <= 1;
-		end
-		else */if (MIOEN) begin
+		end */
+		if (MIOEN) begin
 			if(RW) begin
 				mem[Addr] <= dataIn;
 				//Ready <=1;
@@ -142,7 +147,8 @@ module memory (input clk, input [15:0] Addr, input [15:0] dataIn, input RW, inpu
 	assign Ready = MIOEN;
 endmodule
 
-module LC3Simulation(input clk, input reset, input [15:0] PEECEE, input LOADPC, input memload, input [1048575:0] contents);
+module LC3Simulation(input clk, input reset, input [15:0] PEECEE, input LOADPC,
+ input memload, input [15:0] memloadAddress, input [15:0] memloadBits);
 	wire [15:0] SR1OUT, SR2OUT, SR2MUXOUTPUT, 
 	ALURESULT, ADDR1MUXRESULT, MARMUXADDERRESULT, MARMUXRESULT, PCPLUSONE, memoryOutput;
 	wire GateALU, GateMARMUX, GatePC, GateMDR, ADDR1MUX, MARMUX, LDPC, RW,
@@ -156,7 +162,7 @@ module LC3Simulation(input clk, input reset, input [15:0] PEECEE, input LOADPC, 
 	RegisterFile REGFILE (.clk(clk), .writeData(mainBus), .writeAddr(DR), .writeEn(LDREG),
 	.readAddr2(SR2), .readAddr1(SR1), .readData2(SR2OUT), .readData1(SR1OUT));
 	
-	memory memoryAttachment ( clk, MAR, MDR, RW, MIOEN, memReady, memoryOutput);
+	memory memoryAttachment ( clk, MAR, MDR, RW, MIOEN, memReady, memoryOutput, memload, memloadAddress, memloadBits);
 	
 	assign SR2MUXOUTPUT = (IR[5]) ? {{11{IR[4]}} , IR[4:0]} : SR2OUT;
 	
