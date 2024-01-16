@@ -294,7 +294,7 @@ module LC3Simulation(input clk, input reset, input [15:0] PEECEE, input LOADPC, 
 
 	assign ADDR1MUXRESULT = (ADDR1MUX) ? SR1OUT: PC;
 	wire hello, hello2;
-	Sixteenbitadder MARMUXADDER (ADDR1MUX, ADDR2MUX, 0, MARMUXADDERRESULT, hello);
+	Sixteenbitadder MARMUXADDER (ADDR1MUXRESULT, ADDR2MUXRESULT, 0, MARMUXADDERRESULT, hello);
 	
 	Sixteenbitadder PCPLUSONEADDER (PC, 16'b0, 1, PCPLUSONE, hello2);
 
