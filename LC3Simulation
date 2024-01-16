@@ -23,7 +23,8 @@ module ALU (input [1:0] control, input [15:0] A, input [15:0] B, output [15:0] o
 	wire [15:0] insertB;
 	assign insertB = ~({16{control[1]}} | {16{control[0]}}) & B;
 	assign insertA = (control[0]) ? A&B : A ^ {16{control[1]}};
-	Sixteenbitadder Adder (insertA, insertB, 0, out, 0);
+	wire peepee;
+	Sixteenbitadder Adder (insertA, insertB, 0, out, peepee);
 endmodule
 /*
 module registerfile (input clk, input [15:0] newb, input [2:0] DR, input LDREG, input [2:0] SR2, input [2:0] SR1, output [15:0] SR2OUT, output [15:0] SR1OUT); 
@@ -197,14 +198,14 @@ module LC3Simulation(input clk, input reset, input [15:0] PEECEE, input LOADPC, 
 	assign PCMUX[1] = ~(state== 18 || state == 30);
 	assign PCMUX[0] = state==30;
 	assign GatePC = ~state[5] & ~state[0] & ((~(state[4] ^ state[3]) & state[2] & ~state[1]) | state[4:1] == 9); /* Error in compute for next line, state[27]*/
-	assign LDCC = ~state[5] & (state[4:0] == 1 || state[4:0] == 5 || state[4:0] == 9 || state[4:0] ==14 || state[27]);
+	assign LDCC = ~state[5] & (state[4:0] == 1 || state[4:0] == 5 || state[4:0] == 9 || state[4:0] ==14 || state[4:0] == 27);
 	assign GateALU = ~state[5] & ~state[4] & state[0] & ~state[1] & ~(state[2] & state[3]);
 	assign GateMDR = (~state[5] & state[4] & state[3] & state[1] & (state[0] | state[2])) | (state[5] & state[1]);
 	assign RW = state[4:0] == 5'b10000;
 	assign LDMAR = ~state[5] & ((~state[4] & ~state[3] & state[1] &~state[0]) | (~state[4] & state[3] & state[1] & state[0] & state[0]) | (state[4] & ~state[2] & state[1] & ~state[0]));
 	assign MIOEN = ~state[1] & ((~state[5] & state[4] & state[3]) | (~state[5] & state[4] & ~state[2] & ~state[0]) | (state[5] & ~state[4] & ~state[3] & ~state[2] & state[0]));
 	assign MARMUX = state[4] | ~state[3] | ~state[2] | ~state[1] | ~state[0];
-	assign LDMAR = (~state[5] & state[4] & state[3] & ~state[1]) | state[4:0]==23 | state==33;
+	assign LDMDR = (~state[5] & state[4] & state[3] & ~state[1]) | state[4:0]==23 | state==33;
 	assign ALUK[0] = state[2];
 	assign ALUK[1] = state[4] | state[3];
 	assign SR1MUX[0] = ~(state==23);
@@ -292,10 +293,10 @@ module LC3Simulation(input clk, input reset, input [15:0] PEECEE, input LOADPC, 
 	end
 
 	assign ADDR1MUXRESULT = (ADDR1MUX) ? SR1OUT: PC;
+	wire hello, hello2;
+	Sixteenbitadder MARMUXADDER (ADDR1MUX, ADDR2MUX, 0, MARMUXADDERRESULT, hello);
 	
-	Sixteenbitadder MARMUXADDER (ADDR1MUX, ADDR2MUX, 0, MARMUXADDERRESULT, 0);
-	
-	Sixteenbitadder PCPLUSONEADDER (PC, 16'b0, 1, PCPLUSONE, 0);
+	Sixteenbitadder PCPLUSONEADDER (PC, 16'b0, 1, PCPLUSONE, hello2);
 
 	assign MARMUXRESULT = (MARMUX) ? {{8{1'b0}},IR[7:0]} : MARMUXADDERRESULT;
 
