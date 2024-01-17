@@ -120,7 +120,7 @@ endmodule
     */
 module memory (input clk, input [15:0] Addr, input [15:0] dataIn, input RW, input MIOEN, output Ready, output [15:0] memoryOutput,
 input memLoad, input [15:0] memLoadAddress, input [15:0] memLoadBits);
-	reg [15:0] mem [65536];	
+	reg [15:0] mem [65535];	
 	
 	always @(posedge clk) begin
 		if(memLoad)
@@ -148,7 +148,8 @@ input memLoad, input [15:0] memLoadAddress, input [15:0] memLoadBits);
 endmodule
 
 module LC3Simulation(input clk, input reset, input [15:0] PEECEE, input LOADPC,
- input memload, input [15:0] memloadAddress, input [15:0] memloadBits);
+ input memload, input [15:0] memloadAddress, input [15:0] memloadBits,
+ output [5:0] stateOutput);
 	wire [15:0] SR1OUT, SR2OUT, SR2MUXOUTPUT, 
 	ALURESULT, ADDR1MUXRESULT, MARMUXADDERRESULT, MARMUXRESULT, PCPLUSONE, memoryOutput;
 	wire GateALU, GateMARMUX, GatePC, GateMDR, ADDR1MUX, MARMUX, LDPC, RW,
@@ -166,7 +167,7 @@ module LC3Simulation(input clk, input reset, input [15:0] PEECEE, input LOADPC,
 	
 	assign SR2MUXOUTPUT = (IR[5]) ? {{11{IR[4]}} , IR[4:0]} : SR2OUT;
 	
-	
+
 	ALU  regularALU (.control(ALUK), .A(SR1OUT) , .B(SR2MUXOUTPUT) , .out(ALURESULT));
 	
 	
@@ -221,7 +222,8 @@ module LC3Simulation(input clk, input reset, input [15:0] PEECEE, input LOADPC,
 	assign ADDR1MUX = state[2] & ((~state[1] & ~state[0]) | (~state[4] & ~state[3]));
 	assign ADDR2MUX[0] = (state[0] & ~state[1]) | (state[2] & ~state[3] & ~state[4]);
 	assign ADDR2MUX[1] = ~state[2] | (~state[1] & state[0]) | (state[3] & state[1]) | (state[4] & state[1]);
-
+	assign stateOutput[5:0] = state[5:0];
+	
 	always @(posedge clk) begin
 		if(reset) begin
 			state <= 18;
