@@ -149,7 +149,8 @@ endmodule
 
 module LC3Simulation(input clk, input reset, input [15:0] PEECEE, input LOADPC,
  input memload, input [15:0] memloadAddress, input [15:0] memloadBits,
- output [5:0] stateOutput);
+ output [5:0] stateOutput,  output [15:0] mainBusOutput, output [15:0] MAROutput,
+output [15:0] MDROutput, output [15:0] PCOutput, output [15:0] IROutput);
 	wire [15:0] SR1OUT, SR2OUT, SR2MUXOUTPUT, 
 	ALURESULT, ADDR1MUXRESULT, MARMUXADDERRESULT, MARMUXRESULT, PCPLUSONE, memoryOutput;
 	wire GateALU, GateMARMUX, GatePC, GateMDR, ADDR1MUX, MARMUX, LDPC, RW,
@@ -167,6 +168,14 @@ module LC3Simulation(input clk, input reset, input [15:0] PEECEE, input LOADPC,
 	
 	assign SR2MUXOUTPUT = (IR[5]) ? {{11{IR[4]}} , IR[4:0]} : SR2OUT;
 	
+	assign stateOutput = state;
+	assign mainBusOutput = mainBus;
+	assign MAROutput = MAR;
+	assign MDROutput = MDR;
+	assign PCOutput = PC;
+	assign IROutput = IR;
+
+
 
 	ALU  regularALU (.control(ALUK), .A(SR1OUT) , .B(SR2MUXOUTPUT) , .out(ALURESULT));
 	
