@@ -12,7 +12,7 @@ module RegisterFile #(
   output logic [ DataWidth-1:0] readData1,
   output logic [ DataWidth-1:0] readData2
 );
-
+//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
   logic [DataWidth-1:0] regs[NumRegs];
 
   always_ff @(posedge clk) begin
