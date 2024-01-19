@@ -12,6 +12,7 @@ module RegisterFile #(
   output logic [ DataWidth-1:0] readData1,
   output logic [ DataWidth-1:0] readData2
 );
+//https://github.com/illinois-cs-coursework/sp24_ece220_alexg5.git
 //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
   logic [DataWidth-1:0] regs[NumRegs];
 
