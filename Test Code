@@ -1,0 +1,56 @@
+module hello;
+	reg clk = 0;
+	reg reset = 1;
+	reg [15:0] pc = 16'b0011000000000000;
+	reg loadPC = 1;
+	reg memoryLoad = 1;
+	reg [15:0] Address = 16'b0011000000000000;
+	reg [15:0] Data = 16'b0101001001100000;
+	wire [5:0] state;
+	wire [15:0] MDR, MAR, MainBus, IR, PC, SR1;
+	wire [2:0] control;
+	always #5 clk = ~clk;
+	initial
+		begin
+			$display("Hello, world");
+			#20 Address = 16'b0011000000000001;
+			Data = 16'b0001001001100101;
+			#10 Address = 16'b0011000000000010;
+			Data = 16'b0001001001100101;
+			#10 Address = 16'b0011000000000011;
+			Data = 16'b0000111111111100;
+			#10 reset = 0;
+			memoryLoad = 0;
+			loadPC = 0;
+			#300 $finish;
+			
+		end
+    LC3Simulation oopsie (
+        .clk(clk),
+        .reset(reset),
+        .PEECEE(pc),
+        .LOADPC(loadPC),
+        .memload(memoryLoad),
+        .memloadAddress(Address),
+        .memloadBits(Data),
+        .stateOutput(state),
+        .mainBusOutput(MainBus),
+        .MAROutput(MAR),
+        .MDROutput(MDR),
+        .PCOutput(PC),
+        .IROutput(IR),
+	.SR1Output(SR1),
+	.control(control)
+    );
+
+	initial 
+		//$monitor("At time %t, PC = %h (%0d)", $time, PC,PC);
+		$monitor("At time %t, MainBus = %h , PC = %h, MDR = %h, MAR = %h, IR = %h, state = %0d, SR1 = %h, control = %h", $time, MainBus,PC, MDR, MAR, IR, state, SR1, control);
+		//$monitor("At time %t, MDR = %h (%0d)", $time, MDR,MDR);
+		//$monitor("At time %t, MAR = %h (%0d)", $time, MAR,MAR);
+		//$monitor("At time %t, IR = %h (%0d)", $time, IR,IR);
+		//$monitor("At time %t, state = %h (%0d)", $time, state,state);
+
+endmodule
+
+
