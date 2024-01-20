@@ -1,11 +1,11 @@
 module hello;
 	reg clk = 0;
 	reg reset = 1;
-	reg [15:0] pc = 16'b0011000000000000;
+	reg [15:0] pc = 16'b0011000000000001;
 	reg loadPC = 1;
 	reg memoryLoad = 1;
 	reg [15:0] Address = 16'b0011000000000000;
-	reg [15:0] Data = 16'b0101001001100000;
+	reg [15:0] Data = 16'b0001101011111110;
 	wire [5:0] state;
 	wire [15:0] MDR, MAR, MainBus, IR, PC, SR1;
 	wire control;
@@ -14,15 +14,27 @@ module hello;
 		begin
 			$display("Hello, world");
 			#20 Address = 16'b0011000000000001;
-			Data = 16'b0001001001100101;
+			Data = 16'b0010010111111110;
 			#10 Address = 16'b0011000000000010;
-			Data = 16'b0001001001100101;
+			Data = 16'b0101001010100001;
 			#10 Address = 16'b0011000000000011;
-			Data = 16'b0000111111111101;
+			Data = 16'b0000010000000010;
+			#10 Address = 16'b0011000000000100;
+			Data = 16'b0001001001111110;
+			#10 Address = 16'b0011000000000101;
+			Data = 16'b0000111000000001;
+			#10 Address = 16'b0011000000000110;
+			Data = 16'b0001001001100001;
+			#10 Address = 16'b0011000000000111;
+			Data = 16'b1111000000100101;
+			/* #10 Address = 16'b0011000000001000;
+			Data = 16'b0000011111111011;
+			#10 Address = 16'b0011000000001001;
+			Data = 16'b1111000000100101; */
 			#10 reset = 0;
 			memoryLoad = 0;
 			loadPC = 0;
-			#1200 $finish;
+			#10000 $finish;
 			
 		end
     LC3Simulation oopsie (
@@ -52,6 +64,4 @@ module hello;
 		//$monitor("At time %t, state = %h (%0d)", $time, state,state);
 
 endmodule
-
-
 
