@@ -1,4 +1,5 @@
 
+
 module Full_Adder (input A, input B, input Cin, output sum, output Cout);
 	assign sum = A^B^Cin;
 	assign Cout = (A&B) | (B&Cin) | (A&Cin);
@@ -107,7 +108,8 @@ output [15:0] SR1Output, output control);
 	wire GateALU, GateMARMUX, GatePC, GateMDR, ADDR1MUX, MARMUX, LDPC, RW, LDREG,
 	LDIR, Negative, Zero, Positive, LDMDR, LDMAR, MIOEN, LDBEN, LDCC, memReady; 
 	reg [15:0] PC, mainBus,  MAR, MDR,IR, ADDR2MUXRESULT, PCMUXRESULT;
-	reg[2:0] SR1,DR, SR2;
+	reg[2:0] SR1,DR;
+	wire[2:0] SR2;
 	reg [2:0] CC = 3'b000;
 	wire [1:0] ALUK, ADDR2MUX, PCMUX, DRMUX, SR1MUX;
 	reg [5:0] state = 6'b010010;
@@ -125,8 +127,8 @@ output [15:0] SR1Output, output control);
 	assign MDROutput = MDR;
 	assign PCOutput = PC;
 	assign IROutput = IR;
-	assign SR1Output = SR1OUT;
-	assign control = LDCC;
+	assign SR1Output = MARMUXRESULT;
+	assign control = MARMUX;
 
 	ALU  regularALU (.control(ALUK), .A(SR1OUT) , .B(SR2MUXOUTPUT) , .out(ALURESULT));
 	
@@ -183,7 +185,7 @@ output [15:0] SR1Output, output control);
 	assign ADDR2MUX[0] = (state[0] & ~state[1]) | (state[2] & ~state[3] & ~state[4]);
 	assign ADDR2MUX[1] = ~state[2] | (~state[1] & state[0]) | (state[3] & state[1]) | (state[4] & state[1]);
 	assign stateOutput[5:0] = state[5:0];
-	
+	assign SR2 = IR[2:0];
 	always @(posedge clk) begin
 		if(reset) begin
 			state <= 18;
@@ -225,7 +227,7 @@ output [15:0] SR1Output, output control);
 				PC <= PC;
 
 			case (state)
-				0: state <= {1'b0,BEN,1'b0, BEN, BEN,1'b0};
+				0: state <= {1'b0,1'b1,1'b0, BEN, 1'b1,1'b0};
 				1: state <= 18;
 				2: state <= 25;
 				3: state<= 23;
@@ -275,7 +277,7 @@ output [15:0] SR1Output, output control);
 	assign BEN = (CC[2] & IR[11])|(CC[1] & IR[10])|(CC[0] & IR[9]);
 	Sixteenbitadder PCPLUSONEADDER (PC, 16'b0, 1, PCPLUSONE, hello2);
 
-	assign MARMUXRESULT = (MARMUX) ? {{8{1'b0}},IR[7:0]} : MARMUXADDERRESULT;
+	assign MARMUXRESULT = (~MARMUX) ? {{8{1'b0}},IR[7:0]} : MARMUXADDERRESULT;
 
 	assign Negative = mainBus[15];
 	assign Zero = ~(|mainBus);
