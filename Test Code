@@ -8,7 +8,7 @@ module hello;
 	reg [15:0] Data = 16'b0101001001100000;
 	wire [5:0] state;
 	wire [15:0] MDR, MAR, MainBus, IR, PC, SR1;
-	wire [2:0] control;
+	wire control;
 	always #5 clk = ~clk;
 	initial
 		begin
@@ -18,11 +18,11 @@ module hello;
 			#10 Address = 16'b0011000000000010;
 			Data = 16'b0001001001100101;
 			#10 Address = 16'b0011000000000011;
-			Data = 16'b0000111111111100;
+			Data = 16'b0000111111111101;
 			#10 reset = 0;
 			memoryLoad = 0;
 			loadPC = 0;
-			#300 $finish;
+			#1200 $finish;
 			
 		end
     LC3Simulation oopsie (
@@ -52,5 +52,6 @@ module hello;
 		//$monitor("At time %t, state = %h (%0d)", $time, state,state);
 
 endmodule
+
 
 
