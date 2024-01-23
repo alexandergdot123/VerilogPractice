@@ -102,7 +102,7 @@ module LC3Simulation(input clk, input reset, input [15:0] PEECEE, input LOADPC,
  input memload, input [15:0] memloadAddress, input [15:0] memloadBits,
  output [5:0] stateOutput,  output [15:0] mainBusOutput, output [15:0] MAROutput,
 output [15:0] MDROutput, output [15:0] PCOutput, output [15:0] IROutput,
-output [15:0] SR1Output, output control);
+output [15:0] SR1Output, output [2:0] control);
 	wire [15:0] SR1OUT, SR2OUT, SR2MUXOUTPUT, 
 	ALURESULT, ADDR1MUXRESULT, MARMUXADDERRESULT, MARMUXRESULT, PCPLUSONE, memoryOutput;
 	wire GateALU, GateMARMUX, GatePC, GateMDR, ADDR1MUX, MARMUX, LDPC, RW, LDREG,
@@ -128,7 +128,7 @@ output [15:0] SR1Output, output control);
 	assign PCOutput = PC;
 	assign IROutput = IR;
 	assign SR1Output = SR1OUT;
-	assign control = GateALU;
+	assign control = SR1;
 
 	ALU  regularALU (.control(ALUK), .A(SR1OUT) , .B(SR2MUXOUTPUT) , .out(ALURESULT));
 	
@@ -171,11 +171,11 @@ output [15:0] SR1Output, output control);
 	assign GateALU = ~state[5] & ((~state[4] & state[0] & ~state[1] & ~(state[2] & state[3])) | (state[4:0] == 23)) ;
 	assign GateMDR = (~state[5] & state[4] & state[3] & state[1]) | (state[5] & state[1]);
 	assign RW = state[4:0] == 5'b10000;
-	assign LDMAR = ~state[5] & ((~state[4] & ~state[3] & state[1]) | (~state[4] & state[3] & state[1] & (~state[2] | state[0])) | (state[4] & ~state[2] & state[1] & ~state[0]));
+	assign LDMAR = ~state[5] & ((~state[4] & ~state[3] & state[1]) | (~state[4] & state[3] & state[1] & (~state[2] | state[0])) | (state[4] & ~state[2] & state[1] & ~state[0]) | state[4:0] == 31);
 	assign MIOEN = ~state[1] & ((~state[5] & state[4] & state[3]) | (~state[5] & state[4] & ~state[2] & ~state[0]) | (state[5] & ~state[4] & ~state[3] & ~state[2] & state[0]));
 	assign MARMUX = state[4] | ~state[3] | ~state[2] | ~state[1] | ~state[0];
 	assign LDMDR = (~state[5] & state[4] & state[3] & ~state[1]) | state[4:0]==23 | state==33;
-	assign ALUK[0] = state[2];
+	assign ALUK[0] = state[2] & ~(state[4:0] == 23);
 	assign ALUK[1] = state[4] | state[3];
 	assign SR1MUX[0] = ~(state==23);
 	assign SR1MUX[1] = 1'b0;
