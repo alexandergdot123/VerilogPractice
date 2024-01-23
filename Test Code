@@ -8,7 +8,7 @@ module hello;
 	reg [15:0] Data = 16'b0011000000000000;
 	wire [5:0] state;
 	wire [15:0] MDR, MAR, MainBus, IR, PC, SR1;
-	wire  control;
+	wire [2:0] control;
 	always #5 clk = ~clk;
 	initial
 		begin
@@ -32,7 +32,7 @@ module hello;
 			#10 Address = 16'b0011000000001000;
 			Data = 16'b0010101111110110; 
 			#10 Address = 16'b0011000000001001;
-			Data = 16'b0010110111110110; 
+			Data = 16'b1001101101111111; 
 			#10 reset = 0;
 			memoryLoad = 0;
 			loadPC = 0;
@@ -62,3 +62,4 @@ module hello;
 
 
 endmodule
+
